@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYBERSENTINEL // AI SOC HOLOGRAPHIC COMMAND</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Orbitron, Rajdhani, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Marked.js for Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="min-h-screen flex flex-col relative selection:bg-cyan-400 selection:text-black">
+
+  <!-- ========================================== -->
+  <!-- TOP HOLOGRAPHIC COCKPIT STATUS BAR -->
+  <!-- ========================================== -->
+  <header class="border-b border-cyan-500/25 bg-cyber-950/80 backdrop-blur-md sticky top-0 z-50 px-4 py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Left: Identity & Core Status -->
+      <div class="flex items-center gap-3">
+        <div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-950/80 border border-cyan-400/60 shadow-[0_0_15px_rgba(0,240,255,0.4)] text-cyan-300">
+          <i data-lucide="cpu" class="w-4 h-4 animate-pulse"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-orbitron font-extrabold text-sm tracking-wider text-white">
+              CYBERSENTINEL <span class="glow-text-cyan">// AI CORE</span>
+            </span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/90 border border-cyan-500/50 text-cyan-300" id="hudEngineBadge">
+              SOC TIER-3
+            </span>
+          </div>
+          <p class="text-[11px] font-rajdhani font-semibold text-slate-400 tracking-wider">AUTONOMOUS CYBER DEFENSE MATRIX</p>
+        </div>
+      </div>
+
+      <!-- Center: Threat Defcon & Telemetry -->
+      <div class="hidden md:flex items-center gap-6 text-xs font-mono">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">DEFCON:</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-bold tracking-wider" id="hudDefcon">
+            NORMAL [5]
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">NEURAL LINK:</span>
+          <span class="text-cyan-400 font-bold" id="hudNeuralLink">ACTIVE (99.8%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">AI MODE:</span>
+          <span class="text-cyan-300 font-bold" id="hudEngineMode">AUTONOMOUS SOC</span>
+        </div>
+      </div>
+
+      <!-- Right: Gemini Connect, Audio FX Toggle & Session Controls -->
+      <div class="flex items-center gap-2">
+        <button id="geminiModalBtn" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyber-900 border border-cyan-500/50 hover:border-cyan-400 text-xs font-mono text-cyan-300 transition shadow-[0_0_12px_rgba(0,240,255,0.2)]">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span id="geminiBtnLabel">CONNECT GEMINI AI</span>
+        </button>
+
+        <button id="soundToggleBtn" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyber-900 border border-cyan-500/30 hover:border-cyan-400 text-xs font-mono text-cyan-300 transition">
+          <i data-lucide="volume-2" class="w-3.5 h-3.5" id="soundIcon"></i>
+          <span id="soundLabel">FX</span>
+        </button>
+
+        <button id="resetSessionBtn" class="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyber-900 border border-rose-500/30 hover:border-rose-400 text-xs font-mono text-rose-300 transition" title="Clear Memory & Telemetry">
+          <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+        </button>
+
+        <span class="hidden sm:inline-block text-xs font-mono text-slate-400 border-l border-cyan-500/20 pl-2.5" id="liveUtcClock">
+          00:00:00 UTC
+        </span>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- GEMINI API KEY MODAL -->
+  <!-- ========================================== -->
+  <div id="geminiModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="hud-panel hud-corner-brackets p-6 max-w-md w-full space-y-4 scanlines relative shadow-[0_0_40px_rgba(0,240,255,0.25)]">
+      <div class="flex items-center justify-between border-b border-cyan-500/30 pb-2.5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-amber-400 animate-pulse"></i>
+          <h3 class="font-orbitron text-sm font-bold text-white">CONNECT GOOGLE GEMINI AI</h3>
+        </div>
+        <button id="closeGeminiModal" class="text-slate-400 hover:text-rose-400 text-xl font-bold px-1.5">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed font-sans">
+        Connect your <strong>Google Gemini API Key</strong> to empower CyberSentinel with cutting-edge conversational intelligence, deep code reasoning, and multi-modal analysis!
+      </p>
+
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-mono text-cyan-400 font-bold">PASTE GEMINI API KEY:</label>
+        <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." class="hud-input w-full text-xs font-mono">
+        <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+          <span>Don't have a key?</span>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-cyan-400 underline font-semibold flex items-center gap-1">
+            <span>Get Free Key (Google AI Studio)</span>
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-cyan-500/20">
+        <button id="cancelGeminiBtn" class="px-3.5 py-1.5 rounded-lg bg-cyber-900 border border-slate-700 text-slate-300 text-xs font-mono">
+          Cancel
+        </button>
+        <button id="saveGeminiKeyBtn" class="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-orbitron font-bold text-xs shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+          CONNECT & ACTIVATE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAIN COCKPIT VIEWPORT -->
+  <!-- ========================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-10">
+
+    <!-- ========================================== -->
+    <!-- LEFT HUD COLUMN: AI MENU & TELEMETRY (3 Cols) -->
+    <!-- ========================================== -->
+    <div class="lg:col-span-3 space-y-4 flex flex-col justify-between">
+      
+      <!-- HUD Panel 1: "Hello, I'm your AI Agent" (Directly matching image) -->
+      <div class="hud-panel hud-corner-brackets p-4 scanlines">
+        <div class="flex items-center gap-2.5 mb-2.5">
+          <div class="w-6 h-6 rounded-full border border-cyan-400 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.4)]">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          </div>
+          <div>
+            <h2 class="font-orbitron text-xs font-bold text-white tracking-wide">Hello, I'm your AI Agent</h2>
+            <p class="text-[11px] font-rajdhani text-cyan-300/80 font-semibold">How can I protect your systems today?</p>
+          </div>
+        </div>
+
+        <!-- Action Module Selection Buttons -->
+        <div class="space-y-1.5 mt-3">
+          <button class="hud-btn-action active" data-tool="chat" onclick="selectCockpitTool('chat')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="message-square" class="w-4 h-4 text-cyan-400"></i>
+              <span>AI SOC Copilot</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+          </button>
+
+          <button class="hud-btn-action" data-tool="universal" onclick="selectCockpitTool('universal')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="scan-eye" class="w-4 h-4 text-emerald-400"></i>
+              <span class="text-emerald-300 font-bold">Universal Inspector</span>
+            </span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300 font-mono">ANY INFO</span>
+          </button>
+
+          <button class="hud-btn-action" data-tool="logs" onclick="selectCockpitTool('logs')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="file-search" class="w-4 h-4 text-cyan-400"></i>
+              <span>Log Threat Triage</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+          </button>
+
+          <button class="hud-btn-action" data-tool="code" onclick="selectCockpitTool('code')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="shield-alert" class="w-4 h-4 text-purple-400"></i>
+              <span>SAST Code Audit</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+          </button>
+
+          <button class="hud-btn-action" data-tool="network" onclick="selectCockpitTool('network')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+              <span>Recon & Headers</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+          </button>
+
+          <button class="hud-btn-action" data-tool="cve" onclick="selectCockpitTool('cve')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="database" class="w-4 h-4 text-amber-400"></i>
+              <span>CVE Intel Vault</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+          </button>
+
+          <button class="hud-btn-action" data-tool="report" onclick="selectCockpitTool('report')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="file-check" class="w-4 h-4 text-cyan-300"></i>
+              <span>Incident Report</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- HUD Panel 2: Live Diagnostic Terminal (Matching image terminal) -->
+      <div class="hud-panel hud-corner-brackets p-3.5 scanlines font-mono text-[11px]">
+        <div class="flex items-center justify-between text-cyan-400 border-b border-cyan-500/20 pb-1.5 mb-2">
+          <span class="flex items-center gap-1.5 font-bold tracking-wider">
+            <i data-lucide="terminal" class="w-3 h-3"></i> SYSTEM_INITIALIZATION
+          </span>
+          <span class="text-[9px] text-emerald-400 font-bold" id="diagStatusBadge">ONLINE</span>
+        </div>
+        <div class="space-y-1 text-slate-300 leading-snug" id="diagnosticLogs">
+          <div class="text-cyan-300">&gt; initializing agent...</div>
+          <div class="text-cyan-300">&gt; connecting to neural matrix...</div>
+          <div class="text-cyan-300">&gt; loading mitre att&amp;ck models...</div>
+          <div class="text-emerald-400 font-bold">&gt; cyber telemetry: ready.</div>
+        </div>
+      </div>
+
+      <!-- HUD Panel 3: "Smarter Faster Together" / Equalizer (Matching bottom-left image) -->
+      <div class="hud-panel hud-corner-brackets p-3.5 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">DEFENSE HARMONICS</span>
+          <h3 class="font-orbitron text-xs font-bold text-white mt-0.5">Smarter Faster Together</h3>
+          <p class="text-[11px] text-slate-400 font-rajdhani font-semibold">Real-Time Threat Mitigation Rate</p>
+        </div>
+        <div class="flex items-end gap-1 h-8 px-2 py-1 bg-cyber-950/80 rounded border border-cyan-500/30">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- CENTER HUD COLUMN: THE AI AVATAR & PROJECTION POD (4 Cols) -->
+    <!-- ========================================== -->
+    <div class="lg:col-span-4 flex flex-col items-center justify-center relative">
+      
+      <!-- Top Floating AI Status Indicator -->
+      <div class="mb-3 px-4 py-1 rounded-full bg-cyber-950/80 border border-cyan-400/50 shadow-[0_0_15px_rgba(0,240,255,0.3)] flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span class="font-orbitron text-[11px] font-bold text-cyan-300 tracking-wider">CYBERSENTINEL // SOC ONLINE</span>
+      </div>
+
+      <!-- Holographic Avatar Pod -->
+      <div class="avatar-pod">
+        <!-- Hologram Light Emitter Platform (Rings) -->
+        <div class="hologram-beam"></div>
+        <div class="hologram-ring-1"></div>
+        <div class="hologram-ring-2"></div>
+
+        <!-- The Sci-Fi Android Female Avatar -->
+        <div class="avatar-image-wrap">
+          <img src="/static/avatar.png?v=2" alt="CyberSentinel AI Android Avatar" class="avatar-image" id="avatarImg">
+          <div class="avatar-vignette"></div>
+          
+          <!-- Scanline overlay over avatar -->
+          <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,240,255,0.08)_50%)] bg-[length:100%_4px] pointer-events-none opacity-80"></div>
+          
+          <!-- Corner sci-fi brackets on avatar itself -->
+          <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400"></div>
+          <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400"></div>
+          <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400"></div>
+          <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400"></div>
+        </div>
+      </div>
+
+      <!-- Voice / Cognitive Subtitle Pill -->
+      <div class="mt-4 w-full max-w-sm px-4 py-2.5 rounded-xl bg-cyber-950/90 border border-cyan-500/40 text-center shadow-[0_0_20px_rgba(0,240,255,0.15)] relative">
+        <div class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider mb-0.5 flex items-center justify-center gap-1.5">
+          <i data-lucide="radio" class="w-3 h-3 text-cyan-400 animate-pulse"></i>
+          <span>COGNITIVE SPEECH LINK</span>
+        </div>
+        <p class="text-xs text-slate-200 font-rajdhani font-semibold leading-relaxed" id="avatarSpeechText">
+          "Greetings, Commander. All SOC surveillance arrays are online. Paste any code, log, IP, URL, or security query to inspect."
+        </p>
+      </div>
+
+      <!-- Quick Command Prompt Chips below Avatar -->
+      <div class="flex flex-wrap justify-center gap-1.5 mt-3 text-xs">
+        <button onclick="executeQuickPrompt('analyze log samples/access.log')" class="hud-chip">
+          🔍 Scan Access.log
+        </button>
+        <button onclick="executeQuickPrompt('audit code samples/vulnerable_app.py')" class="hud-chip">
+          🛡️ Audit Code
+        </button>
+        <button onclick="executeQuickPrompt('cve CVE-2021-44228')" class="hud-chip">
+          ⚡ Log4Shell
+        </button>
+        <button onclick="executeQuickPrompt('scan host 127.0.0.1')" class="hud-chip">
+          🌐 Recon Host
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- RIGHT HUD COLUMN: ACTIVE WORKSPACE & NEURAL MATRIX (5 Cols) -->
+    <!-- ========================================== -->
+    <div class="lg:col-span-5 flex flex-col space-y-4">
+
+      <!-- Top Widgets Row: Neural Brain Canvas + Global Threat Telemetry -->
+      <div class="grid grid-cols-2 gap-3">
+        
+        <!-- Widget 1: Animated 3D Neural Brain Canvas (Matching top-right image) -->
+        <div class="hud-panel hud-corner-brackets p-3 flex flex-col items-center justify-between h-36">
+          <div class="w-full flex items-center justify-between text-[10px] font-mono text-cyan-400 border-b border-cyan-500/20 pb-1">
+            <span class="font-bold flex items-center gap-1">
+              <i data-lucide="activity" class="w-3 h-3"></i> NEURAL_BRAIN
+            </span>
+            <span class="text-emerald-400">99.8%</span>
+          </div>
+          <canvas id="neuralBrainCanvas" width="160" height="90" class="my-auto"></canvas>
+          <span class="text-[9px] font-mono text-slate-400">TTP COGNITIVE MAPPING</span>
+        </div>
+
+        <!-- Widget 2: Global Threat Telemetry (Matching middle-right image) -->
+        <div class="hud-panel hud-corner-brackets p-3 flex flex-col justify-between h-36">
+          <div class="flex items-center justify-between text-[10px] font-mono text-cyan-400 border-b border-cyan-500/20 pb-1">
+            <span class="font-bold flex items-center gap-1">
+              <i data-lucide="globe" class="w-3 h-3"></i> GLOBAL_ACCESS
+            </span>
+            <span class="text-emerald-400">LIVE</span>
+          </div>
+          <div class="space-y-1.5 text-xs font-mono my-auto">
+            <div class="flex justify-between text-slate-300">
+              <span>ACTIVE_HOSTS:</span>
+              <span class="text-cyan-400 font-bold">1,420</span>
+            </div>
+            <div class="flex justify-between text-slate-300">
+              <span>FLAGGED_IPS:</span>
+              <span class="text-rose-400 font-bold" id="widgetThreatCount">0 DETECTED</span>
+            </div>
+            <div class="flex justify-between text-slate-300">
+              <span>SYSTEM_UPTIME:</span>
+              <span class="text-emerald-400 font-bold">99.98%</span>
+            </div>
+          </div>
+          <span class="text-[9px] font-mono text-slate-400">WORLD SOC SENSORS</span>
+        </div>
+
+      </div>
+
+      <!-- Main Interactive Workstation (Dynamic Viewport) -->
+      <div class="hud-panel hud-corner-brackets p-4 flex-1 flex flex-col min-h-[460px] scanlines">
+        
+        <!-- Header of Workstation -->
+        <div class="flex items-center justify-between border-b border-cyan-500/25 pb-2.5 mb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="terminal-square" class="w-4 h-4 text-cyan-400" id="workstationIcon"></i>
+            <h3 class="font-orbitron text-xs font-bold text-white tracking-wider" id="workstationTitle">
+              AI SOC COPILOT CHAT
+            </h3>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] font-mono text-cyan-400">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="workstationModeBadge">SECURE STREAM</span>
+          </div>
+        </div>
+
+        <!-- VIEWPORT 1: AI CHAT (Default) -->
+        <div id="view-chat" class="tool-view flex-1 flex flex-col">
+          <div id="chatStream" class="flex-1 overflow-y-auto space-y-3 pr-2 text-xs font-sans max-h-[340px]">
+            <!-- Welcome Message from CyberSentinel -->
+            <div class="flex gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex items-center justify-center shrink-0">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+              </div>
+              <div class="bg-cyber-950/90 border border-cyan-500/30 p-3 rounded-xl text-slate-200 leading-relaxed font-sans text-xs shadow-sm">
+                <p class="font-orbitron font-bold text-cyan-400 text-xs mb-1">CYBERSENTINEL // ASSISTANT ENGAGED</p>
+                <p>Hello! I am your Autonomous Cybersecurity Copilot. You can ask any question, paste arbitrary code or log lines, or connect your Gemini API Key using the button at the top!</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Command Input Bar -->
+          <form id="cockpitChatForm" class="mt-3 pt-2.5 border-t border-cyan-500/20 flex gap-2">
+            <input type="text" id="cockpitChatInput" placeholder="Type ANY query, paste code/log line, or 'set key AIzaSy...'..." 
+                   class="hud-input flex-1 text-xs">
+            <button type="submit" id="cockpitSendBtn" class="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold text-xs flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+              <span>SEND</span>
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- VIEWPORT: UNIVERSAL INSPECTOR (New requested feature) -->
+        <div id="view-universal" class="tool-view hidden flex-1 flex flex-col space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-emerald-300 font-bold font-orbitron flex items-center gap-1.5">
+              <i data-lucide="scan-eye" class="w-4 h-4 text-emerald-400"></i>
+              <span>UNIVERSAL CYBER INSPECTOR</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">Paste ANY info to auto-audit</span>
+          </div>
+
+          <textarea id="universalInput" rows="5" placeholder="Paste ANYTHING here to check it!
+Examples:
+• A single log line: 192.168.1.1 - - [01/Nov/2026] &quot;GET /login?user=admin' OR '1'='1&quot; 200
+• A piece of code: cursor.execute(f&quot;SELECT * FROM users WHERE name='{user}'&quot;)
+• An IP address: 192.168.1.105
+• A domain/URL: https://github.com
+• A CVE ID: CVE-2021-44228"
+                    class="hud-input w-full text-[11px] font-mono"></textarea>
+
+          <button id="universalRunBtn" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-orbitron font-bold text-xs tracking-wider transition shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2">
+            <i data-lucide="scan-eye" class="w-4 h-4"></i>
+            <span>AUTO-DETECT &amp; INSPECT NOW</span>
+          </button>
+
+          <div id="universalOutput" class="flex-1 overflow-y-auto text-xs space-y-2 max-h-[190px] p-2 rounded-lg bg-cyber-950/80 border border-emerald-500/30">
+            <p class="text-slate-500 italic">Paste any data above and click inspect to see immediate threat analysis.</p>
+          </div>
+        </div>
+
+        <!-- VIEWPORT 2: LOG ANALYZER -->
+        <div id="view-logs" class="tool-view hidden flex-1 flex flex-col space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-300 font-semibold">Web Server & Auth Log Threat Triage</span>
+            <div class="flex gap-1.5">
+              <button id="cockpitLoadSampleLog" class="hud-chip text-[10px]">
+                ⚡ Load Sample Attack Log
+              </button>
+              <label class="hud-chip text-[10px] cursor-pointer">
+                📂 Upload .log
+                <input type="file" id="cockpitLogFile" accept=".log,.txt" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <textarea id="cockpitLogInput" rows="4" placeholder="Paste Apache / Nginx / auth logs here or click 'Load Sample Attack Log'..."
+                    class="hud-input w-full text-[11px] font-mono"></textarea>
+
+          <button id="cockpitRunLogBtn" class="w-full py-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-orbitron font-bold text-xs tracking-wider transition shadow-[0_0_15px_rgba(0,240,255,0.3)] flex items-center justify-center gap-2">
+            <i data-lucide="scan" class="w-4 h-4"></i>
+            <span>EXECUTE DEEP LOG THREAT INSPECTION</span>
+          </button>
+
+          <!-- Output summary -->
+          <div id="cockpitLogOutput" class="flex-1 overflow-y-auto text-xs font-mono space-y-2 max-h-[220px]">
+            <p class="text-slate-500 italic">No log inspection executed yet.</p>
+          </div>
+        </div>
+
+        <!-- VIEWPORT 3: SAST CODE AUDITOR -->
+        <div id="view-code" class="tool-view hidden flex-1 flex flex-col space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-300 font-semibold">SAST Static Source Code Auditor</span>
+            <div class="flex gap-1.5">
+              <button id="cockpitLoadSampleCode" class="hud-chip text-[10px] border-purple-500/40 text-purple-300">
+                ⚡ Load Vulnerable App
+              </button>
+              <label class="hud-chip text-[10px] cursor-pointer">
+                📂 Upload .py / .js
+                <input type="file" id="cockpitCodeFile" accept=".py,.js,.php" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <textarea id="cockpitCodeInput" rows="4" placeholder="Paste Python / JS source code or click 'Load Vulnerable App'..."
+                    class="hud-input w-full text-[11px] font-mono"></textarea>
+
+          <button id="cockpitRunCodeBtn" class="w-full py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-orbitron font-bold text-xs tracking-wider transition shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center justify-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>RUN SAST STATIC SECURITY AUDIT</span>
+          </button>
+
+          <div id="cockpitCodeOutput" class="flex-1 overflow-y-auto text-xs font-mono space-y-2 max-h-[220px]">
+            <p class="text-slate-500 italic">No code audit executed yet.</p>
+          </div>
+        </div>
+
+        <!-- VIEWPORT 4: NETWORK RECON & HEADERS -->
+        <div id="view-network" class="tool-view hidden flex-1 flex flex-col space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Port Scan -->
+            <div class="p-3 rounded-lg bg-cyber-950/80 border border-cyan-500/30 space-y-2">
+              <span class="text-xs font-bold text-cyan-300 font-orbitron">TCP PORT RECON</span>
+              <div class="flex gap-1.5">
+                <input type="text" id="cockpitHostInput" value="127.0.0.1" class="hud-input flex-1 text-xs py-1.5">
+                <button id="cockpitScanPortBtn" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-bold">
+                  SCAN
+                </button>
+              </div>
+              <div id="cockpitPortOutput" class="text-[11px] font-mono text-slate-300 max-h-[140px] overflow-y-auto">
+                <span class="text-slate-500">Ready to scan ports...</span>
+              </div>
+            </div>
+
+            <!-- Header Audit -->
+            <div class="p-3 rounded-lg bg-cyber-950/80 border border-emerald-500/30 space-y-2">
+              <span class="text-xs font-bold text-emerald-300 font-orbitron">SECURITY HEADERS</span>
+              <div class="flex gap-1.5">
+                <input type="text" id="cockpitUrlInput" value="https://google.com" class="hud-input flex-1 text-xs py-1.5">
+                <button id="cockpitScanHeaderBtn" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold">
+                  AUDIT
+                </button>
+              </div>
+              <div id="cockpitHeaderOutput" class="text-[11px] font-mono text-slate-300 max-h-[140px] overflow-y-auto">
+                <span class="text-slate-500">Ready to inspect CSP/HSTS...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEWPORT 5: CVE INTEL VAULT -->
+        <div id="view-cve" class="tool-view hidden flex-1 flex flex-col space-y-3">
+          <div class="flex gap-2">
+            <input type="text" id="cockpitCveInput" placeholder="Enter CVE ID (e.g. CVE-2021-44228, CVE-2023-34362)..."
+                   class="hud-input flex-1 text-xs uppercase">
+            <button id="cockpitSearchCveBtn" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-mono font-bold text-xs">
+              LOOKUP
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 text-xs">
+            <button onclick="quickCveLookup('CVE-2021-44228')" class="hud-chip border-rose-500/50 text-rose-300">Log4Shell</button>
+            <button onclick="quickCveLookup('CVE-2022-22965')" class="hud-chip border-amber-500/50 text-amber-300">Spring4Shell</button>
+            <button onclick="quickCveLookup('CVE-2023-34362')" class="hud-chip border-rose-500/50 text-rose-300">MOVEit</button>
+            <button onclick="quickCveLookup('CVE-2023-4966')" class="hud-chip border-cyan-500/50 text-cyan-300">CitrixBleed</button>
+          </div>
+
+          <div id="cockpitCveOutput" class="flex-1 overflow-y-auto text-xs space-y-2 max-h-[260px] p-2 rounded-lg bg-cyber-950/80 border border-cyan-500/20">
+            <p class="text-slate-500 italic">Query any CVE to access mitigation playbooks.</p>
+          </div>
+        </div>
+
+        <!-- VIEWPORT 6: INCIDENT REPORT -->
+        <div id="view-report" class="tool-view hidden flex-1 flex flex-col space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-300 font-bold font-orbitron">EXECUTIVE MITRE ATT&amp;CK REPORT</span>
+            <div class="flex gap-2">
+              <button id="cockpitRefreshReport" class="hud-chip text-[10px]">
+                🔄 Refresh
+              </button>
+              <a href="/api/report/download" target="_blank" class="px-2.5 py-1 rounded bg-cyan-600 text-white font-mono text-[11px] font-bold">
+                ⬇️ Download .MD
+              </a>
+            </div>
+          </div>
+
+          <div id="cockpitReportPreview" class="flex-1 overflow-y-auto text-xs p-3 rounded-lg bg-cyber-950 border border-cyan-500/30 prose prose-invert prose-cyan max-h-[300px]">
+            <p class="text-slate-500">Generating report preview...</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- FOOTER TELEMETRY TICKER -->
+  <!-- ========================================== -->
+  <footer class="border-t border-cyan-500/20 bg-cyber-950/90 py-2 px-4 text-[11px] font-mono text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span class="text-cyan-300 font-bold">CYBERSENTINEL AI</span>
+        <span>• Autonomous Cybersecurity Operations Center</span>
+      </div>
+      <div class="flex items-center gap-4 text-[10px]">
+        <span>ENGINE: PYTHON 3.13 / FLASK</span>
+        <span>FRAMEWORK: MITRE ATT&amp;CK v14.1</span>
+        <span>STATUS: ALL SENSORS NOMINAL</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
