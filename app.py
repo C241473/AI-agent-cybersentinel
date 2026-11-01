@@ -8,8 +8,9 @@ import sys
 import hmac
 from datetime import datetime
 from typing import Dict, Any
-from flask import Flask, Response, render_template, request, jsonify, send_file
+from flask import Flask, Response, g, has_request_context, render_template, request, jsonify, send_file
 import io
+from werkzeug.local import LocalProxy
 
 # Ensure project directory is in python path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,9 +23,15 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max upload
 
+PUBLIC_DEMO = os.environ.get("CYBERSENTINEL_PUBLIC_DEMO") == "1"
+
 
 @app.before_request
 def require_vercel_password():
+    if PUBLIC_DEMO:
+        g.cybersentinel_agent = CyberSentinelAgent()
+        return None
+
     if os.environ.get("VERCEL") != "1":
         return None
 
@@ -49,12 +56,21 @@ def require_vercel_password():
 
 
 # Initialize SOC Agent Instance
-agent = CyberSentinelAgent()
+_agent = CyberSentinelAgent()
+
+
+def _request_agent():
+    if PUBLIC_DEMO and has_request_context():
+        return g.cybersentinel_agent
+    return _agent
+
+
+agent = LocalProxy(_request_agent)
 
 @app.route("/")
 def index():
     """Render the main SOC Operations Dashboard."""
-    return render_template("index.html")
+    return render_template("index.html", public_demo=PUBLIC_DEMO)
 
 @app.route("/api/status", methods=["GET"])
 def api_status():
@@ -75,6 +91,8 @@ def api_status():
 @app.route("/api/settings/gemini-key", methods=["POST"])
 def api_set_gemini_key():
     """Save and activate user Gemini API key."""
+    if PUBLIC_DEMO:
+        return jsonify({"error": "Gemini API keys cannot be configured in the public demo."}), 403
     data = request.get_json(silent=True) or {}
     key = data.get("api_key", "").strip()
     if not key:
@@ -94,6 +112,8 @@ def api_scan_universal():
     input_data = data.get("input_data", "").strip()
     if not input_data:
         return jsonify({"error": "No input data provided"}), 400
+    if PUBLIC_DEMO and agent.detect_input_type(input_data) in {"IP", "URL"}:
+        return jsonify({"error": "Network reconnaissance is disabled in the public demo."}), 403
     try:
         inspection = agent.universal_inspect(input_data)
         return jsonify({
@@ -225,6 +245,8 @@ def api_scan_code():
 @app.route("/api/scan/network", methods=["POST"])
 def api_scan_network():
     """Perform port scan or HTTP header posture audit."""
+    if PUBLIC_DEMO:
+        return jsonify({"error": "Network reconnaissance is disabled in the public demo."}), 403
     data = request.get_json(silent=True) or {}
     scan_type = data.get("type", "ports")  # "ports" or "headers"
     target = data.get("target", "").strip()

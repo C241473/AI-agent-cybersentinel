@@ -67,10 +67,12 @@
 
       <!-- Right: Gemini Connect, Audio FX Toggle & Session Controls -->
       <div class="flex items-center gap-2">
-        <button id="geminiModalBtn" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyber-900 border border-cyan-500/50 hover:border-cyan-400 text-xs font-mono text-cyan-300 transition shadow-[0_0_12px_rgba(0,240,255,0.2)]">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span id="geminiBtnLabel">CONNECT GEMINI AI</span>
-        </button>
+        {% if not public_demo %}
+          <button id="geminiModalBtn" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyber-900 border border-cyan-500/50 hover:border-cyan-400 text-xs font-mono text-cyan-300 transition shadow-[0_0_12px_rgba(0,240,255,0.2)]">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span id="geminiBtnLabel">CONNECT GEMINI AI</span>
+          </button>
+        {% endif %}
 
         <button id="soundToggleBtn" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyber-900 border border-cyan-500/30 hover:border-cyan-400 text-xs font-mono text-cyan-300 transition">
           <i data-lucide="volume-2" class="w-3.5 h-3.5" id="soundIcon"></i>
@@ -89,9 +91,16 @@
     </div>
   </header>
 
+  {% if public_demo %}
+  <div class="mx-auto mt-3 w-[calc(100%-2rem)] max-w-7xl rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-2 text-xs font-mono text-amber-200">
+    PUBLIC DEMO: Network recon and Gemini key configuration are disabled. Log analysis, code audit, and CVE lookup are available.
+  </div>
+  {% endif %}
+
   <!-- ========================================== -->
   <!-- GEMINI API KEY MODAL -->
   <!-- ========================================== -->
+  {% if not public_demo %}
   <div id="geminiModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
     <div class="hud-panel hud-corner-brackets p-6 max-w-md w-full space-y-4 scanlines relative shadow-[0_0_40px_rgba(0,240,255,0.25)]">
       <div class="flex items-center justify-between border-b border-cyan-500/30 pb-2.5">
@@ -99,6 +108,7 @@
           <i data-lucide="sparkles" class="w-5 h-5 text-amber-400 animate-pulse"></i>
           <h3 class="font-orbitron text-sm font-bold text-white">CONNECT GOOGLE GEMINI AI</h3>
         </div>
+        {% endif %}
         <button id="closeGeminiModal" class="text-slate-400 hover:text-rose-400 text-xl font-bold px-1.5">&times;</button>
       </div>
 
@@ -185,13 +195,15 @@
             <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
           </button>
 
-          <button class="hud-btn-action" data-tool="network" onclick="selectCockpitTool('network')">
-            <span class="flex items-center gap-2">
-              <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
-              <span>Recon & Headers</span>
-            </span>
-            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
-          </button>
+          {% if not public_demo %}
+            <button class="hud-btn-action" data-tool="network" onclick="selectCockpitTool('network')">
+              <span class="flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+                <span>Recon & Headers</span>
+              </span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+            </button>
+          {% endif %}
 
           <button class="hud-btn-action" data-tool="cve" onclick="selectCockpitTool('cve')">
             <span class="flex items-center gap-2">
@@ -303,9 +315,11 @@
         <button onclick="executeQuickPrompt('cve CVE-2021-44228')" class="hud-chip">
           ⚡ Log4Shell
         </button>
-        <button onclick="executeQuickPrompt('scan host 127.0.0.1')" class="hud-chip">
-          🌐 Recon Host
-        </button>
+        {% if not public_demo %}
+          <button onclick="executeQuickPrompt('scan host 127.0.0.1')" class="hud-chip">
+            🌐 Recon Host
+          </button>
+        {% endif %}
       </div>
 
     </div>
@@ -487,6 +501,7 @@ Examples:
         </div>
 
         <!-- VIEWPORT 4: NETWORK RECON & HEADERS -->
+        {% if not public_demo %}
         <div id="view-network" class="tool-view hidden flex-1 flex flex-col space-y-3">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <!-- Port Scan -->
@@ -498,6 +513,7 @@ Examples:
                   SCAN
                 </button>
               </div>
+              {% endif %}
               <div id="cockpitPortOutput" class="text-[11px] font-mono text-slate-300 max-h-[140px] overflow-y-auto">
                 <span class="text-slate-500">Ready to scan ports...</span>
               </div>

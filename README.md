@@ -53,14 +53,17 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ```
 *(If no API key is provided, CyberSentinel AI runs 100% autonomously in offline SOC intelligence mode!)*
 
-### 4. Deploy to Vercel
-The Vercel deployment is protected with HTTP Basic Authentication. Before deploying, add
-`CYBERSENTINEL_ACCESS_PASSWORD` as a Vercel environment variable for Production and Preview.
-The login username is `cybersentinel`. If the password is missing, the app returns an error
-instead of becoming publicly accessible. The Vercel deployment can be created with:
+### 4. Deploy a public demo to Vercel
+Set `CYBERSENTINEL_PUBLIC_DEMO=1` as a Vercel environment variable for Production and Preview,
+then deploy with:
 ```bash
 vercel --prod
 ```
+Public demo mode disables network reconnaissance and Gemini API-key configuration, and keeps
+each request's agent memory isolated so visitors cannot see one another's conversation history.
+
+For a password-protected deployment instead, remove `CYBERSENTINEL_PUBLIC_DEMO` and set
+`CYBERSENTINEL_ACCESS_PASSWORD` for Production and Preview. The login username is `cybersentinel`.
 
 ---
 

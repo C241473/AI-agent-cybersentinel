@@ -28,20 +28,26 @@ class CyberSentinelAgent:
         self.code_auditor = CodeAuditor()
         self.network_recon = NetworkRecon()
         self.cve_advisory = CVEAdvisory()
+        self.public_demo = os.getenv("CYBERSENTINEL_PUBLIC_DEMO") == "1"
 
         # Check API key from argument, environment, or .env file
-        self.gemini_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or self._read_env_key()
-        self.openai_key = os.getenv("OPENAI_API_KEY")
+        self.gemini_key = (
+            None
+            if self.public_demo
+            else api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or self._read_env_key()
+        )
+        self.openai_key = None if self.public_demo else os.getenv("OPENAI_API_KEY")
         
         # Tools registry for autonomous dispatch
         self.tools = {
             "analyze_log": self.analyze_log,
             "audit_code": self.audit_code,
-            "scan_ports": self.scan_ports,
-            "inspect_headers": self.inspect_headers,
             "lookup_cve": self.lookup_cve,
             "generate_report": self.generate_incident_report
         }
+        if not self.public_demo:
+            self.tools["scan_ports"] = self.scan_ports
+            self.tools["inspect_headers"] = self.inspect_headers
 
     def _read_env_key(self) -> Optional[str]:
         """Read GEMINI_API_KEY from local .env file if exists."""
@@ -99,12 +105,16 @@ class CyberSentinelAgent:
 
     def scan_ports(self, host: str) -> Dict[str, Any]:
         """Perform TCP reconnaissance scan against target host."""
+        if self.public_demo:
+            return {"host": host, "error": "Network reconnaissance is disabled in the public demo.", "open_ports": []}
         result = self.network_recon.scan_ports(host)
         self.memory.record_scan_result("PORT_SCAN", host, result)
         return result
 
     def inspect_headers(self, url: str) -> Dict[str, Any]:
         """Inspect HTTP security headers for a target website."""
+        if self.public_demo:
+            return {"target_url": url, "error": "Network reconnaissance is disabled in the public demo."}
         result = self.network_recon.inspect_web_headers(url)
         self.memory.record_scan_result("HEADER_INSPECTION", url, result)
         return result
@@ -181,6 +191,14 @@ class CyberSentinelAgent:
         """Process user input dynamically, run tools, or leverage Gemini/SOC intelligence."""
         self.memory.add_message("user", user_prompt)
         input_type = self.detect_input_type(user_prompt)
+
+        if self.public_demo and (
+            input_type in {"IP", "URL"}
+            or re.search(r"\b(scan\s+(host|ip)|audit\s+headers?|check\s+headers?)\b", user_prompt, re.IGNORECASE)
+        ):
+            response = "Network reconnaissance is disabled in this public demo. You can still analyze logs, audit code, and look up CVEs."
+            self.memory.add_message("assistant", response)
+            return response
 
         # 1. API Key Setup
         if input_type == "SET_KEY":
@@ -345,6 +363,14 @@ class CyberSentinelAgent:
             }
 
         elif category == "IP":
+            if self.public_demo:
+                return {
+                    "category": "NETWORK_RECON_DISABLED",
+                    "badge": "PUBLIC_DEMO_LIMIT",
+                    "result": {"error": "Network reconnaissance is disabled in the public demo."},
+                    "synthesis": "Network reconnaissance is disabled in this public demo. You can still analyze logs, audit code, and look up CVEs.",
+                    "risk_score": 0.0
+                }
             ip_match = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', input_text)
             ip = ip_match.group(0) if ip_match else input_text.strip()
             res = self.scan_ports(ip)
@@ -358,6 +384,14 @@ class CyberSentinelAgent:
             }
 
         elif category == "URL":
+            if self.public_demo:
+                return {
+                    "category": "NETWORK_RECON_DISABLED",
+                    "badge": "PUBLIC_DEMO_LIMIT",
+                    "result": {"error": "Network reconnaissance is disabled in the public demo."},
+                    "synthesis": "Network reconnaissance is disabled in this public demo. You can still analyze logs, audit code, and look up CVEs.",
+                    "risk_score": 0.0
+                }
             url_match = re.search(r'https?://\S+|www\.\S+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', input_text)
             url = url_match.group(0) if url_match else input_text.strip()
             res = self.inspect_headers(url)
